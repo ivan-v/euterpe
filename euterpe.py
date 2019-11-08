@@ -1,3 +1,5 @@
+import random
+
 # TODO:
 # write notation for notes
 # convert reasonable notation to pysynth(?)
@@ -6,9 +8,6 @@
 # Notation:
 # First num dictates the first tone, subsequent tones are difference from the 
 # first note
-
-
-
 
 Modes = {
   "Ionian":     [0, 2, 4, 5, 7, 9, 11],
@@ -44,4 +43,34 @@ def apply_key(mode, key):
   mode = {str(key + " " + mode): modulo}
   return mode
 
-print(apply_key("Aeolian", "A"))
+
+def grow_chord_progression(progression):
+  root = progression[0]
+  if root == 0:
+    options = [3, 4, 6]
+  elif root == 4 or root == 6:
+    options = [1, 3]
+  elif root == 1:
+    options = [3, 5]
+  elif root == 3 and len(progression) > 2:
+    options = [0, 5]
+  elif root == 3:
+    options = [5]
+  elif root == 5:
+    options = [0, 2]
+  else:
+    options = [0]
+  return progression.insert(0, options[random.randint(0, len(options)-1)])
+
+
+def generate_chord_progression():
+  progression = []
+  progression.append(0)
+  # gotta be a better do-while way to do this
+  grow_chord_progression(progression)
+  while progression[0] is not 0:
+    grow_chord_progression(progression)
+  return progression
+
+print(generate_chord_progression())
+print(apply_key("Ionian", "C"))
