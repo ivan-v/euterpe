@@ -34,7 +34,7 @@ Keys = {
   "B":  [0, 1, 1, 0, 1, 1, 1], # [shift f, c, g, d, a up]
   "Fs": [1, 1, 1, 0, 1, 1, 1], # [shift f, c, g, d, a, e up]
   "Cs": [1, 1, 1, 1, 1, 1, 1], # [shift f, c, g, d, a, e, b up]
-  "F ": [0, 0, 0, -1, 0, 0, 0], # [shift b down]
+  "F":  [0, 0, 0, -1, 0, 0, 0], # [shift b down]
   "Bb": [-1, 0, 0, -1, 0, 0, 0], # [shift b, e down]
   "Eb": [-1, 0, 0, -1, -1, 0, 0], # [shift b, e, a down]
   "Ab": [-1, -1, 0, -1, -1, 0, 0], # [shift b, e, a, d down]
@@ -47,8 +47,7 @@ def apply_key(mode, key):
   modulo = [0, 0, 0, 0, 0, 0, 0]
   for i in range(len(Keys[key])):
     modulo[i] = Modes[mode][i] + Keys[key][i]
-  mode = { str(key + " " + mode): modulo }
-  return mode
+  return (str(key + " " + mode), modulo)
 
 
 def grow_chord_progression(progression):
@@ -93,11 +92,55 @@ def invert(sequence):
     x.extend([8 - sequence[i]])
   return x
 
+def apply_mode_to_progression(progression, mode):
+	new_progression = []
+	for tone in progression:
+		new_progression.append(tone)
+	for i in range(len(new_progression)):
+		new_progression[i] = mode[1][progression[i]]
+	return new_progression
+
+def convert_progression_to_etuerpea_string(progression, root, mode):
+	s = ""
+	for i in range(len(progression)):
+		note = progression[i]
+		if mode.index(note) < 5:
+			third = mode[mode.index(note)+2]
+		else:
+			third = mode[mode.index(note)-4] + 12
+		if mode.index(note) < 3:
+			fifth = mode[mode.index(note)+4]
+		else:
+			fifth = mode[mode.index(note)-2] + 12
+		s += ("(note qn " + str(root+note) + " :=: note qn " + str(root+third) 
+			+ " :=: note qn "  + str(root+fifth)) + ")"
+		if i < len(progression)-1:
+			diff  = mode.index(progression[i+1]) - mode.index(note)
+			if diff == 2 or diff == -2:
+				step = mode[mode.index(note)+int(diff/2)]
+				s += " :+: note hn " + str(root+step*int(diff/2))
+			elif diff == 1 or diff == -1:
+				s += " :+: note hn " + str(root+note)
+			else:
+				first_step  = mode[mode.index(note) + int(diff/3)] 
+				second_step = mode[mode.index(progression[i+1]) - int(diff/3)]
+				s += " :+: note qn " + str(root+first_step) + " :+: note qn " + str(root+second_step)
+		if i <= len(progression)-2:
+			if random.randint(1, 5) == 1:
+				s += " :+: rest (1 % 4)"
+			s += " :+: "
+	return s
+
+# TO NOTE:
+# Ionian B is BoTW marimba ambient exploration
+
 
 # TESTS
 print(generate_chord_progression())
 print(apply_key("Ionian", "C"))
-
-sequence = [1,2,3,4]
-print(invert(sequence))
+sequence = generate_chord_progression()
+# print(invert(sequence))
 print(sequence)
+a = apply_mode_to_progression(sequence, apply_key("Aeolian", "Ab"))
+print(a)
+print(convert_progression_to_etuerpea_string(a, 60, apply_key("Aeolian", "Ab")[1]))
